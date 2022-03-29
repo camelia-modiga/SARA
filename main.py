@@ -3,6 +3,8 @@ from PyQt5 import uic
 from playsound import playsound
 from theme_config import *
 import sys
+import pyttsx3
+import speech_recognition as sr
 
 
 def play_sound_pressed_button():
@@ -56,6 +58,33 @@ class MainWindow(QMainWindow):
         self.hide()
 
 
+def speechToText(recognizer, microphone):
+    with microphone as source:
+        recognizer.adjust_for_ambient_noise(source)
+        audio = recognizer.listen(source)
+    response = {
+        "success": True,
+        "error": None,
+        "transcription": None
+    }
+
+    try:
+        response["transcription"] = recognizer.recognize_google(audio)
+    except sr.RequestError:
+        response["success"] = False
+        response["error"] = "API unavailable"
+    except sr.UnknownValueError:
+        response["success"] = False
+        response["error"] = "Unable to recognize speech"
+    return response
+
+
+def textToSpeech(myText):
+    engine = pyttsx3.init()
+    engine.say(myText)
+    engine.runAndWait()
+
+
 class SpeachWindow(QWidget):
 
     def __init__(self):
@@ -75,6 +104,7 @@ class SpeachWindow(QWidget):
         self.button.setStyleSheet("QPushButton{"
                                   "background-color:" + BUTTON_COLOR_STYLE_1 + ";}")
         self.button.pressed.connect(play_sound_is_pressed_button)
+        self.button.clicked.connect(self.runSpeaker)
 
         self.backButton = self.findChild(QPushButton, "backButton")
         self.backButton.clicked.connect(play_sound_navigation_button)
@@ -102,6 +132,20 @@ class SpeachWindow(QWidget):
         self.textEdit.setStyleSheet("QTextEdit{"
                                     "color:" + TEXT_EDIT_COLOR + ";}")
         self.textEdit.setReadOnly(True)
+
+    def runSpeaker(self):
+        recognizer = sr.Recognizer()
+        microphone = sr.Microphone()
+        action = 'Listening'
+        textToSpeech(action)
+        text = speechToText(recognizer, microphone)
+        if not text["success"] and text["error"] == "API unavailable":
+            print("ERROR: {}\nclose program".format(text["error"]))
+        while not text["success"]:
+            self.textEdit.setPlainText("I didn't catch that. What did you say?\n")
+            text = speechToText(recognizer, microphone)
+
+        self.textEdit.setPlainText(text["transcription"].lower())
 
     def showMenu(self):
         self.close()
@@ -146,11 +190,22 @@ class TextWindow(QWidget):
         self.textEdit = self.findChild(QTextEdit, "textEdit")
         self.textEdit.setStyleSheet("QTextEdit{"
                                     "color:" + TEXT_EDIT_COLOR + ";}")
+        self.button.clicked.connect(lambda: self.textToSpeech(self.textEdit.toPlainText()))
 
     def showMenu(self):
         self.close()
         self.menu = MenuWindow()
         self.menu.show()
+
+    def textToSpeech(self, message):
+        engine = pyttsx3.init()
+        if not message:
+            engine.say("Please write a message")
+            engine.runAndWait()
+        else:
+            engine.say(message)
+            engine.runAndWait()
+            self.textEdit.setPlainText("")
 
 
 class EmailWindow(QDialog):
