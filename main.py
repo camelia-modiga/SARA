@@ -136,15 +136,14 @@ class SpeachWindow(QWidget):
     def runSpeaker(self):
         recognizer = sr.Recognizer()
         microphone = sr.Microphone()
-        action = 'Listening'
-        textToSpeech(action)
         text = speechToText(recognizer, microphone)
         if not text["success"] and text["error"] == "API unavailable":
             print("ERROR: {}\nclose program".format(text["error"]))
         while not text["success"]:
-            self.textEdit.setPlainText("I didn't catch that. What did you say?\n")
+            print("I didn't catch that. What did you say?\n")
             text = speechToText(recognizer, microphone)
-
+            break
+        print(text["transcription"].lower())
         self.textEdit.setPlainText(text["transcription"].lower())
 
     def showMenu(self):
