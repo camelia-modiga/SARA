@@ -5,6 +5,7 @@ from theme_config import *
 import sys
 import pyttsx3
 import speech_recognition as sr
+from VideoThread import *
 
 
 def play_sound_pressed_button():
@@ -27,6 +28,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.thread = VideoThread()
+        self.thread.start()
 
         self.startButton = None
         uic.loadUi("assets/start.ui", self)
