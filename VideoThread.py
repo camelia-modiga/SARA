@@ -24,9 +24,6 @@ class VideoThread(QThread):
             for (x, y, w, h) in face_rects:
                 cv.rectangle(cvImg, (x + int(w / 2), y + int(h / 2)), (x + int(w / 2), y +
                                                                        int(h / 2)), (0, 255, 0), 3)
-                # xt = tx(x + int(w / 2))
-                # yt = ty(y + int(h / 2))
-                # xg, yg = gxy(xt, yt, matrix)
 
                 pyautogui.moveTo(x, y)
 
